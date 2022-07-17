@@ -1,4 +1,4 @@
-var turnToggle = true
+var turnToggle = false
 
 enum STATUS {
   AVAILABLE = 'AVAILABLE',
@@ -58,9 +58,11 @@ class Tile {
         this.status === STATUS.WHITE) return
       this.element.classList.remove(this.status.toLowerCase())
       if (turnToggle){
+        turnOrderText.innerText = "Current player: black"
         this.status = this.status === STATUS.AVAILABLE || STATUS.BLACK ? STATUS.WHITE : STATUS.AVAILABLE
         turnToggle = !turnToggle
       } else {
+        turnOrderText.innerText = "Current player: white"
         this.status = this.status === STATUS.AVAILABLE || STATUS.WHITE ? STATUS.BLACK : STATUS.AVAILABLE
         turnToggle = !turnToggle
       }
@@ -104,18 +106,28 @@ class Tile {
     }
   }
 
+// Creating the game board
 var seatMap = new SeatMap(15, 15)
+var resetButton = document.createElement('div')
+var turnOrderText = document.createElement('div')
 document.getElementById('container')?.append(seatMap.element)
 
-var resetButton = document.createElement('div')
+//Adding the reset button
 resetButton.classList.add('reset')
 resetButton.innerText = "RESET"
 document.getElementById('reset-container')?.append(resetButton)
 
 resetButton.addEventListener('click', () => {
-  console.log("reset click")
   console.log(seatMap.selectedSeats.map((index) => console.log(seatMap[index])))
   seatMap.rows.map((row) => row.tiles.map((tile) => tile.resetStatus()))
   seatMap.resetSelectedSeats()
+  turnOrderText.innerText = "Current player: black"
+  turnToggle = false
 })
+
+//Changing the turn order for the player
+turnOrderText.classList.add('turnOrder')
+turnOrderText.innerText = "Current player: black"
+document.getElementById('turn-order')?.append(turnOrderText)
+
 
