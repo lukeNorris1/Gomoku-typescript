@@ -1,12 +1,12 @@
+var turnToggle = true
+
 enum STATUS {
-    AVAILABLE = 'AVAILABLE',
-    UNAVAILABLE = 'UNAVAILABLE',
-    WHITE = 'WHITE',
-    BLACK = 'BLACK'
+  AVAILABLE = 'AVAILABLE',
+  UNAVAILABLE = 'UNAVAILABLE',
+  WHITE = 'WHITE',
+  BLACK = 'BLACK'
 
 }
-
-var turnToggle = true
 
 class Row {
     id: number
@@ -43,6 +43,13 @@ class Tile {
       this.element.addEventListener('click', () => {
         this.handleClick()
       })
+    }
+
+    resetStatus(){
+      this.element.classList.remove(STATUS.BLACK.toLowerCase())
+      this.status = STATUS.AVAILABLE
+      this.element.classList.remove(STATUS.WHITE.toLowerCase())
+      this.element.classList.add(STATUS.AVAILABLE.toLowerCase())
     }
   
     handleClick() {
@@ -85,18 +92,30 @@ class Tile {
         this.getSelectedSeatsId()
       })
     }
+
+    resetSelectedSeats(){
+      this.selectedSeats.splice(0)
+    }
   
     getSelectedSeatsId() {
-    // this.selectedSeats = this.rows.reduce<number[]>((total, row) => {
-    //   total = [...total, ...row.selectedSeatsId]
-    //   return total
-    // }, [])
       this.selectedSeats = this.rows.map((row) => row.selectedTilesId).flat()
       console.log(`selected seats: ${this.selectedSeats.join(',')}`)
+      
     }
   }
 
-var seatMap = new SeatMap(15, 15,)
-seatMap.selectedSeats.push(12)
-console.log(seatMap.selectedSeats)
+var seatMap = new SeatMap(15, 15)
 document.getElementById('container')?.append(seatMap.element)
+
+var resetButton = document.createElement('div')
+resetButton.classList.add('reset')
+resetButton.innerText = "RESET"
+document.getElementById('reset-container')?.append(resetButton)
+
+resetButton.addEventListener('click', () => {
+  console.log("reset click")
+  console.log(seatMap.selectedSeats.map((index) => console.log(seatMap[index])))
+  seatMap.rows.map((row) => row.tiles.map((tile) => tile.resetStatus()))
+  seatMap.resetSelectedSeats()
+})
+
