@@ -1,4 +1,5 @@
-var turnToggle = false
+var turnToggle: Boolean = false
+const boardSize: number = 3
 
 enum STATUS {
   AVAILABLE = 'AVAILABLE',
@@ -11,6 +12,8 @@ enum STATUS {
 class Row {
     id: number
     tiles: Tile[]
+    whiteTiles: Tile[]
+    blackTiles: Tile[]
     element: HTMLDivElement
   
     constructor(id: number, seatNumber: number, occupiedSeats: number[] = []) {
@@ -47,8 +50,8 @@ class Tile {
 
     resetStatus(){
       this.element.classList.remove(STATUS.BLACK.toLowerCase())
-      this.status = STATUS.AVAILABLE
       this.element.classList.remove(STATUS.WHITE.toLowerCase())
+      this.status = STATUS.AVAILABLE
       this.element.classList.add(STATUS.AVAILABLE.toLowerCase())
     }
   
@@ -78,7 +81,6 @@ class Tile {
     rows: Row[]
     selectedSeats: number[] = []
     element: HTMLDivElement
-  
     constructor(
       rowNumber: number,
       seatNumberPerRow: number,
@@ -98,18 +100,32 @@ class Tile {
     resetSelectedSeats(){
       this.selectedSeats.splice(0)
     }
-  
     getSelectedSeatsId() {
       this.selectedSeats = this.rows.map((row) => row.selectedTilesId).flat()
       console.log(`selected seats: ${this.selectedSeats.join(',')}`)
-      
+      if (seatMap.selectedSeats.length == boardSize * boardSize) turnOrderText.innerText = "DRAW"
     }
   }
 
 // Creating the game board
-var seatMap = new SeatMap(15, 15)
+var seatMap = new SeatMap(boardSize, boardSize)
 var resetButton = document.createElement('div')
 var turnOrderText = document.createElement('div')
+
+function fullBoard(){
+  for (let i = 0; i < seatMap.rows.length; i++){
+    for (let j = 0; j < seatMap.rows[i].tiles.length; j++){
+      if (seatMap.rows[i].tiles[j].status != STATUS.BLACK || 
+        seatMap.rows[i].tiles[j].status != STATUS.WHITE) {
+        console.log("Trigger 2")
+        return true
+      }
+      console.log(seatMap.rows[i].tiles[j])
+    }
+  }
+}
+
+
 document.getElementById('container')?.append(seatMap.element)
 
 //Adding the reset button
@@ -118,7 +134,6 @@ resetButton.innerText = "RESET"
 document.getElementById('reset-container')?.append(resetButton)
 
 resetButton.addEventListener('click', () => {
-  console.log(seatMap.selectedSeats.map((index) => console.log(seatMap[index])))
   seatMap.rows.map((row) => row.tiles.map((tile) => tile.resetStatus()))
   seatMap.resetSelectedSeats()
   turnOrderText.innerText = "Current player: black"
@@ -129,5 +144,3 @@ resetButton.addEventListener('click', () => {
 turnOrderText.classList.add('turnOrder')
 turnOrderText.innerText = "Current player: black"
 document.getElementById('turn-order')?.append(turnOrderText)
-
-
