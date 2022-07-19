@@ -2,6 +2,7 @@ var turnToggle: Boolean = false
 var winConditionMet: Boolean = false
 var hiddenTileToggle: Boolean = false
 const boardSize: number = 15
+var drawConditionCounter: number = boardSize * boardSize
 
 enum STATUS {
   AVAILABLE = 'AVAILABLE',
@@ -107,14 +108,16 @@ class Tile {
 
     hideRandomTile(){
       var tempTile = this.rows[Math.floor(Math.random() * boardSize)].tiles[Math.floor(Math.random() * boardSize)]
+      if (tempTile.element.style.visibility == "hidden") this.hideRandomTile()
       tempTile.element.style.visibility = "hidden"
       tempTile.status = STATUS.AVAILABLE
+      drawConditionCounter -= 1
+      console.log('drawCondCounter: ' + drawConditionCounter)
     }
 
     getSelectedTilesId() {
       this.selectedTiles = this.rows.map((row) => row.selectedTilesId).flat()
-      console.log(`selected tiles: ${this.selectedTiles.join(',')}`)
-      if (tileMap.selectedTiles.length == boardSize * boardSize) turnOrderText.innerText = "DRAW"
+      if (tileMap.selectedTiles.length == drawConditionCounter) turnOrderText.innerText = "DRAW"
     }
   }
 
@@ -145,7 +148,7 @@ resetButton.addEventListener('click', () => {
 
 buttonHiddenToggle.addEventListener('click', () => {
   hiddenTileToggle = !hiddenTileToggle
-  if (hiddenTileToggle) buttonHiddenToggle.style.color = 'green'
+  if (hiddenTileToggle) buttonHiddenToggle.style.color = 'lightgreen'
   else buttonHiddenToggle.style.color = '#FFFFFF'
 })
 
