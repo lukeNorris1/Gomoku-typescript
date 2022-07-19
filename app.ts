@@ -106,7 +106,9 @@ class Tile {
     }
 
     hideRandomTile(){
-      this.rows[Math.floor(Math.random() * boardSize)].tiles[Math.floor(Math.random() * boardSize)].element.style.visibility = "hidden"
+      var tempTile = this.rows[Math.floor(Math.random() * boardSize)].tiles[Math.floor(Math.random() * boardSize)]
+      tempTile.element.style.visibility = "hidden"
+      tempTile.status = STATUS.AVAILABLE
     }
 
     getSelectedTilesId() {
@@ -123,6 +125,10 @@ var turnOrderText = document.createElement('div')
 var buttonHiddenToggle = document.createElement('div')
 document.getElementById('container')?.append(tileMap.element)
 
+//Adding hidden toggle button for additional feature
+buttonHiddenToggle.innerText = "Hard Difficulty"
+document.getElementById('hideTile-container')?.append(buttonHiddenToggle)
+
 //Adding the reset button
 resetButton.classList.add('reset')
 resetButton.innerText = "RESET"
@@ -130,10 +136,17 @@ document.getElementById('reset-container')?.append(resetButton)
 
 resetButton.addEventListener('click', () => {
   tileMap.rows.map((row) => row.tiles.map((tile) => tile.resetStatus()))
+  tileMap.rows.map((row) => row.tiles.map((tile) => tile.element.style.visibility = 'visible'))
   tileMap.selectedTiles.splice(0)
   turnOrderText.innerText = "Current player: black"
   turnToggle = false
   winConditionMet = false
+})
+
+buttonHiddenToggle.addEventListener('click', () => {
+  hiddenTileToggle = !hiddenTileToggle
+  if (hiddenTileToggle) buttonHiddenToggle.style.color = 'green'
+  else buttonHiddenToggle.style.color = '#FFFFFF'
 })
 
 //Changing the turn order for the player
