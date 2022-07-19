@@ -1,30 +1,28 @@
 var turnToggle: Boolean = false
-const boardSize: number = 3
+var winConditionMet: Boolean = false
+var hiddenTileToggle: Boolean = false
+const boardSize: number = 15
 
 enum STATUS {
   AVAILABLE = 'AVAILABLE',
-  UNAVAILABLE = 'UNAVAILABLE',
   WHITE = 'WHITE',
   BLACK = 'BLACK'
-
 }
 
 class Row {
     id: number
     tiles: Tile[]
-    whiteTiles: Tile[]
-    blackTiles: Tile[]
     element: HTMLDivElement
   
-    constructor(id: number, seatNumber: number, occupiedSeats: number[] = []) {
+    constructor(id: number, tileNumber: number) {
       this.id = id
-      this.tiles = Array.from({ length: seatNumber }).map((_, index) => {
-        const seatId = seatNumber * id + index
-        return new Tile(seatId)
+      this.tiles = Array.from({ length: tileNumber }).map((_, index) => {
+        const tileId = tileNumber * id + index
+        return new Tile(tileId)
       })
       this.element = document.createElement('div')
       this.element.classList.add('row')
-      this.element.append(...this.tiles.map((seat) => seat.element))
+      this.element.append(...this.tiles.map((tile) => tile.element))
     }
   
     get selectedTilesId() {
@@ -56,20 +54,30 @@ class Tile {
     }
   
     handleClick() {
-      if (this.status === STATUS.UNAVAILABLE || 
-        this.status === STATUS.BLACK || 
-        this.status === STATUS.WHITE) return
-      this.element.classList.remove(this.status.toLowerCase())
-      if (turnToggle){
-        turnOrderText.innerText = "Current player: black"
-        this.status = this.status === STATUS.AVAILABLE || STATUS.BLACK ? STATUS.WHITE : STATUS.AVAILABLE
-        turnToggle = !turnToggle
-      } else {
-        turnOrderText.innerText = "Current player: white"
-        this.status = this.status === STATUS.AVAILABLE || STATUS.WHITE ? STATUS.BLACK : STATUS.AVAILABLE
-        turnToggle = !turnToggle
+      if (!winConditionMet){
+        if (this.status === STATUS.BLACK || 
+          this.status === STATUS.WHITE) return
+        this.element.classList.remove(this.status.toLowerCase())
+        if (hiddenTileToggle) tileMap.hideRandomTile()
+        if (turnToggle){
+          turnOrderText.innerText = "Current player: black"
+          this.status = this.status === STATUS.AVAILABLE || STATUS.BLACK ? STATUS.WHITE : STATUS.AVAILABLE
+          turnToggle = !turnToggle
+        } else {
+          turnOrderText.innerText = "Current player: white"
+          this.status = this.status === STATUS.AVAILABLE || STATUS.WHITE ? STATUS.BLACK : STATUS.AVAILABLE
+          turnToggle = !turnToggle
+        }
+        if (won('white')){
+          turnOrderText.innerText = "White Won!"
+          winConditionMet = true
+        }
+        else if (won('black')){
+          turnOrderText.innerText = "Black Won!"
+          winConditionMet = true
+        }
+        this.element.classList.add(this.status.toLowerCase())
       }
-      this.element.classList.add(this.status.toLowerCase())
     }
   
     get isSelected() {
@@ -77,56 +85,43 @@ class Tile {
     }
   }
 
-  class SeatMap {
+  class TileMap {
     rows: Row[]
-    selectedSeats: number[] = []
+    selectedTiles: number[] = []
     element: HTMLDivElement
+
     constructor(
       rowNumber: number,
-      seatNumberPerRow: number,
-      occupiedSeats: number[] = []
+      tileNumberPerRow: number
     ) {
       this.rows = Array.from({ length: rowNumber }).map((_, index) => {
-        return new Row(index, seatNumberPerRow, occupiedSeats)
+        return new Row(index, tileNumberPerRow)
       })
       this.element = document.createElement('div')
       this.element.classList.add('board-container')
       this.element.append(...this.rows.map((row) => row.element))
       this.element.addEventListener('click', () => {
-        this.getSelectedSeatsId()
+        this.getSelectedTilesId()
       })
     }
 
-    resetSelectedSeats(){
-      this.selectedSeats.splice(0)
+    hideRandomTile(){
+      this.rows[Math.floor(Math.random() * boardSize)].tiles[Math.floor(Math.random() * boardSize)].element.style.visibility = "hidden"
     }
-    getSelectedSeatsId() {
-      this.selectedSeats = this.rows.map((row) => row.selectedTilesId).flat()
-      console.log(`selected seats: ${this.selectedSeats.join(',')}`)
-      if (seatMap.selectedSeats.length == boardSize * boardSize) turnOrderText.innerText = "DRAW"
+
+    getSelectedTilesId() {
+      this.selectedTiles = this.rows.map((row) => row.selectedTilesId).flat()
+      console.log(`selected tiles: ${this.selectedTiles.join(',')}`)
+      if (tileMap.selectedTiles.length == boardSize * boardSize) turnOrderText.innerText = "DRAW"
     }
   }
 
 // Creating the game board
-var seatMap = new SeatMap(boardSize, boardSize)
+var tileMap = new TileMap(boardSize, boardSize)
 var resetButton = document.createElement('div')
 var turnOrderText = document.createElement('div')
-
-function fullBoard(){
-  for (let i = 0; i < seatMap.rows.length; i++){
-    for (let j = 0; j < seatMap.rows[i].tiles.length; j++){
-      if (seatMap.rows[i].tiles[j].status != STATUS.BLACK || 
-        seatMap.rows[i].tiles[j].status != STATUS.WHITE) {
-        console.log("Trigger 2")
-        return true
-      }
-      console.log(seatMap.rows[i].tiles[j])
-    }
-  }
-}
-
-
-document.getElementById('container')?.append(seatMap.element)
+var buttonHiddenToggle = document.createElement('div')
+document.getElementById('container')?.append(tileMap.element)
 
 //Adding the reset button
 resetButton.classList.add('reset')
@@ -134,13 +129,69 @@ resetButton.innerText = "RESET"
 document.getElementById('reset-container')?.append(resetButton)
 
 resetButton.addEventListener('click', () => {
-  seatMap.rows.map((row) => row.tiles.map((tile) => tile.resetStatus()))
-  seatMap.resetSelectedSeats()
+  tileMap.rows.map((row) => row.tiles.map((tile) => tile.resetStatus()))
+  tileMap.selectedTiles.splice(0)
   turnOrderText.innerText = "Current player: black"
   turnToggle = false
+  winConditionMet = false
 })
 
 //Changing the turn order for the player
 turnOrderText.classList.add('turnOrder')
 turnOrderText.innerText = "Current player: black"
 document.getElementById('turn-order')?.append(turnOrderText)
+
+
+
+function won(inputStatus: string)
+{
+  //check each row: #Horizontal
+  var match: boolean = true;
+  for (let i = 0; i < tileMap.rows.length; i++){
+    for (let j = 2; j < tileMap.rows[i].tiles.length - 2; j++){
+      if (tileMap.rows[i].tiles[j].status.toLowerCase() == inputStatus &&
+        tileMap.rows[i].tiles[j - 2].status.toLowerCase() == inputStatus &&
+        tileMap.rows[i].tiles[j - 1].status.toLowerCase() == inputStatus &&
+        tileMap.rows[i].tiles[j + 1].status.toLowerCase() == inputStatus &&
+        tileMap.rows[i].tiles[j + 2].status.toLowerCase() == inputStatus)
+          return true
+    }
+  }
+  // Check for each column: #Vertical
+  for (let i = 2; i < tileMap.rows.length - 2; i++){
+    for (let j = 0; j < tileMap.rows[i].tiles.length; j++){
+      if (tileMap.rows[i].tiles[j].status.toLowerCase() == inputStatus &&
+      tileMap.rows[i - 2].tiles[j].status.toLowerCase() == inputStatus &&
+      tileMap.rows[i - 1].tiles[j].status.toLowerCase() == inputStatus &&
+      tileMap.rows[i + 1].tiles[j].status.toLowerCase() == inputStatus &&
+      tileMap.rows[i + 2].tiles[j].status.toLowerCase() == inputStatus)
+      return true
+  }
+}  
+  // Check for Diagonal - Top-left to Bottom-Right
+  for (let i = 2; i < tileMap.rows.length - 2; i++){
+    for (let j = 2; j < tileMap.rows[i].tiles.length - 2; j++){
+      if (tileMap.rows[i].tiles[j].status.toLowerCase() == inputStatus &&
+      tileMap.rows[i - 2].tiles[j - 2].status.toLowerCase() == inputStatus &&
+      tileMap.rows[i - 1].tiles[j - 1].status.toLowerCase() == inputStatus &&
+      tileMap.rows[i + 1].tiles[j + 1].status.toLowerCase() == inputStatus &&
+      tileMap.rows[i + 2].tiles[j + 2].status.toLowerCase() == inputStatus)
+        return true
+    }
+  }
+
+// Check for Diagonal - Top-right to Bottom-Left
+for (let i = 2; i < tileMap.rows.length - 2; i++){
+  for (let j = 2; j < tileMap.rows[i].tiles.length - 2; j++){
+    if (tileMap.rows[i].tiles[j].status.toLowerCase() == inputStatus &&
+    tileMap.rows[i - 2].tiles[j + 2].status.toLowerCase() == inputStatus &&
+    tileMap.rows[i - 1].tiles[j + 1].status.toLowerCase() == inputStatus &&
+    tileMap.rows[i + 1].tiles[j - 1].status.toLowerCase() == inputStatus &&
+    tileMap.rows[i + 2].tiles[j - 2].status.toLowerCase() == inputStatus)
+      return true
+  }
+}
+    return false;
+}
+
+
